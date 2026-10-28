@@ -248,12 +248,17 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 # ---- Course: assignment submission ----
 ASSIGNMENT := 1
 BASE_TAG   := base
-export ASSIGNMENT BASE_TAG
+VERIFY_CMD    := hello
+VERIFY_EXPECT := Hello from xv6!
+export ASSIGNMENT BASE_TAG VERIFY_CMD VERIFY_EXPECT
 
 submit:
 	@sh tools/submit.sh "$(ID)"
 
-.PHONY: submit
+verify:
+	@sh tools/verify.sh "$(PATCH)"
+
+.PHONY: submit verify
 
 # CUT HERE
 # prepare dist for students
