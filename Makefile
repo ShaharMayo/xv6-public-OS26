@@ -186,6 +186,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 
+UPROGS += $(EXTRA_UPROGS)
+
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
 
