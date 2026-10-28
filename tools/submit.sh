@@ -26,4 +26,4 @@ if ! git diff --quiet "$BASE_TAG" -- tools Makefile .gitignore .gitattributes; t
 fi
 
 echo "Created $PATCH"
-git diff --stat "$BASE_TAG"
+git apply --stat "$PATCH"
