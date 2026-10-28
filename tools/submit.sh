@@ -27,3 +27,21 @@ fi
 
 echo "Created $PATCH"
 git apply --stat "$PATCH"
+
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    # WSL: put a copy on the Windows Desktop (handles OneDrive-redirected Desktops).
+    PS=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+    WIN=$("$PS" -NoProfile -Command "[Environment]::GetFolderPath('Desktop')" 2>/dev/null | tr -d '\r')
+    DESKTOP=$(wslpath -u "$WIN" 2>/dev/null)
+    if [ -d "$DESKTOP" ] && cp "$PATCH" "$DESKTOP/"; then
+        echo "A copy was placed on your Windows Desktop: $WIN\\$PATCH"
+    else
+        echo "To open this folder in Windows Explorer run:  explorer.exe ."
+    fi
+else
+    IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+    echo "To copy the patch to your computer, run there (not in the VM):"
+    echo "    scp $(id -un)@${IP:-<vm-ip>}:$(pwd)/$PATCH ~/Desktop/"
+    echo "(VirtualBox with port forwarding: scp -P 2222 $(id -un)@localhost:$(pwd)/$PATCH ~/Desktop/)"
+fi
+echo "Upload $PATCH together with your PDF to Moodle."
