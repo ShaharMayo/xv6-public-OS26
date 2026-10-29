@@ -249,7 +249,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 
 # ---- Course: assignment submission ----
 ASSIGNMENT := 1
-BASE_TAG   := base
+BASE_TAG   := hw1-base
 VERIFY_CMD    := hello
 VERIFY_EXPECT := Hello from xv6!
 export ASSIGNMENT BASE_TAG VERIFY_CMD VERIFY_EXPECT
