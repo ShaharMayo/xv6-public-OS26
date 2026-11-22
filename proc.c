@@ -221,6 +221,7 @@ fork(void)
 
   acquire(&ptable.lock);
 
+  np->ctime = ticks;
   np->state = RUNNABLE;
 
   release(&ptable.lock);
