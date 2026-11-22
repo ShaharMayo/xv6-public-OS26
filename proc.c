@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "pstat.h"
 
 struct {
   struct spinlock lock;
@@ -277,7 +278,7 @@ exit(void)
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
 int
-wait(void)
+waitstat(struct pstat *st)
 {
   struct proc *p;
   int havekids, pid;
@@ -294,6 +295,15 @@ wait(void)
       if(p->state == ZOMBIE){
         // Found one.
         pid = p->pid;
+        if(st){
+          st->pid = p->pid;
+          st->priority = p->priority;
+          st->length = p->length;
+          st->ctime = p->ctime;
+          st->etime = p->etime;
+          st->rtime = p->rtime;
+          st->wtime = p->wtime;
+        }
         kfree(p->kstack);
         p->kstack = 0;
         freevm(p->pgdir);
@@ -316,6 +326,12 @@ wait(void)
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
+}
+
+int
+wait(void)
+{
+  return waitstat(0);
 }
 
 //PAGEBREAK: 42
@@ -554,4 +570,23 @@ updatestats(void)
       p->wtime++;
   }
   release(&ptable.lock);
+}
+
+// HW2 (staff): set priority and declared length of process pid.
+int
+setsched(int pid, int priority, int length)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == pid && p->state != UNUSED){
+      p->priority = priority;
+      p->length = length;
+      release(&ptable.lock);
+      return 0;
+    }
+  }
+  release(&ptable.lock);
+  return -1;
 }
