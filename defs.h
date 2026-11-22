@@ -124,6 +124,7 @@ void            yield(void);
 void            updatestats(void);
 int             setsched(int, int, int);
 int             waitstat(struct pstat*);
+int             should_yield(struct proc*);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

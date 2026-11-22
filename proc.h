@@ -56,6 +56,7 @@ struct proc {
   uint wtime;        // ticks spent RUNNABLE (waiting for the CPU)
   int priority;      // smaller number = more important
   int length;        // declared job length in ticks (used by SJF)
+  int slice;         // ticks used in the current turn on the CPU
 };
 
 // Process memory is laid out contiguously, low addresses first:

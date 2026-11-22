@@ -13,6 +13,15 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+// HW2: scheduling policy functions (defined at the end of this file)
+struct proc* pick_next(void);
+struct proc* pick_default(void);
+struct proc* pick_rr(void);
+struct proc* pick_fcfs(void);
+struct proc* pick_sjf(void);
+struct proc* pick_priority(void);
+int quantum_expired(struct proc*);
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -95,6 +104,7 @@ found:
   p->wtime = 0;
   p->priority = 10;
   p->length = 0;
+  p->slice = 0;
 
   release(&ptable.lock);
 
@@ -349,33 +359,21 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
+
   for(;;){
-    // Enable interrupts on this processor.
     sti();
-
-    // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
-
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
+    p = pick_next();              // which process runs now?
+    if(p != 0){
+      p->slice = 0;               // a fresh turn on the CPU
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;
-
       swtch(&(c->scheduler), p->context);
       switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
       c->proc = 0;
     }
     release(&ptable.lock);
-
   }
 }
 
@@ -590,4 +588,94 @@ setsched(int pid, int priority, int length)
   }
   release(&ptable.lock);
   return -1;
+}
+
+// HW2 (staff): choose the next process according to the build's SCHED value.
+// Called by scheduler() with ptable.lock held.
+struct proc*
+pick_next(void)
+{
+#if defined(SCHED_FCFS)
+  return pick_fcfs();
+#elif defined(SCHED_SJF)
+  return pick_sjf();
+#elif defined(SCHED_PRIORITY)
+  return pick_priority();
+#else
+  return pick_rr();
+#endif
+}
+
+// HW2 (staff): the original xv6 behaviour. Used as a placeholder below.
+struct proc*
+pick_default(void)
+{
+  static int next = 0;
+  int i;
+  struct proc *p;
+
+  for(i = 0; i < NPROC; i++){
+    p = &ptable.proc[(next + i) % NPROC];
+    if(p->state == RUNNABLE){
+      next = (next + i + 1) % NPROC;
+      return p;
+    }
+  }
+  return 0;
+}
+
+// HW2 (staff): called on every timer tick for the running process.
+int
+should_yield(struct proc *p)
+{
+#if defined(SCHED_RR)
+  return quantum_expired(p);
+#else
+  return 0;   // FCFS, SJF and PRIORITY never preempt
+#endif
+}
+
+// ============ HW2: your code goes below this line ============
+// In every pick_* function the process table is ptable.proc[0..NPROC-1],
+// and only processes whose state is RUNNABLE may be chosen.
+// Return a pointer to the chosen process, or 0 if none is RUNNABLE.
+
+// FCFS: the RUNNABLE process that was created first (smallest p->ctime).
+struct proc*
+pick_fcfs(void)
+{
+  return pick_default();   // HW2: replace this line
+}
+
+// SJF: the RUNNABLE process with the smallest declared length (p->length).
+struct proc*
+pick_sjf(void)
+{
+  return pick_default();   // HW2: replace this line
+}
+
+// PRIORITY: the RUNNABLE process with the smallest priority number (p->priority).
+struct proc*
+pick_priority(void)
+{
+  return pick_default();   // HW2: replace this line
+}
+
+// Round-robin, part 1: the next RUNNABLE process after the one chosen last
+// time, wrapping around to the start of the table.
+// Hint: a static variable keeps its value between calls.
+struct proc*
+pick_rr(void)
+{
+  return pick_default();   // HW2: replace this line
+}
+
+// Round-robin, part 2: called once per timer tick while p is running.
+// p->slice counts the ticks p has used in its current turn (the kernel
+// resets it to 0 each time p is given the CPU).
+// Return 1 if p has used QUANTUM ticks and must give up the CPU, else 0.
+int
+quantum_expired(struct proc *p)
+{
+  return 1;   // HW2: replace this line
 }
