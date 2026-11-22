@@ -18,3 +18,5 @@ mkfs
 .vscode/
 .idea/
 .DS_Store
+.schedcfg
+results_*.tsv

@@ -82,6 +82,16 @@ CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb 
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 CFLAGS += $(shell $(CC) -Warray-bounds -E -x c /dev/null >/dev/null 2>&1 && echo -Wno-array-bounds)
 CFLAGS += $(shell $(CC) -Winfinite-recursion -E -x c /dev/null >/dev/null 2>&1 && echo -Wno-infinite-recursion)
+# ---- Course: HW2 scheduling policy ----
+# Usage: make qemu-nox SCHED=FCFS      (RR, FCFS, SJF or PRIORITY)
+#        make qemu-nox SCHED=RR QUANTUM=5
+SCHED   ?= RR
+QUANTUM ?= 1
+ifeq ($(filter $(SCHED),RR FCFS SJF PRIORITY),)
+$(error SCHED must be one of: RR FCFS SJF PRIORITY)
+endif
+CFLAGS += -DSCHED_$(SCHED) -DSCHED_NAME=\"$(SCHED)\" -DQUANTUM=$(QUANTUM)
+export SCHED QUANTUM
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
 LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
@@ -198,7 +208,7 @@ clean:
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*.o *.d *.asm *.sym vectors.S bootblock entryother \
 	initcode initcode.out kernel xv6.img fs.img kernelmemfs \
-	xv6memfs.img mkfs .gdbinit \
+	xv6memfs.img mkfs .gdbinit .schedcfg \
 	$(UPROGS)
 
 # make a printout
@@ -262,6 +272,32 @@ verify:
 	@sh tools/verify.sh "$(PATCH)"
 
 .PHONY: submit verify
+
+# Rebuild when SCHED or QUANTUM changes.
+SCHEDCFG := SCHED=$(SCHED) QUANTUM=$(QUANTUM)
+.schedcfg: FORCE
+	@echo '$(SCHEDCFG)' | cmp -s - $@ || echo '$(SCHEDCFG)' > $@
+FORCE:
+$(OBJS) schedtest.o: .schedcfg
+
+# ---- Course: HW2 measurements ----
+QUANTA ?= 5 10
+
+measure:
+	@sh tools/measure.sh
+
+measure-all:
+	@rm -f results_*.tsv
+	@$(MAKE) -s measure SCHED=RR QUANTUM=1
+	@for q in $(QUANTA); do $(MAKE) -s measure SCHED=RR QUANTUM=$$q || exit 1; done
+	@$(MAKE) -s measure SCHED=FCFS QUANTUM=1
+	@$(MAKE) -s measure SCHED=SJF QUANTUM=1
+	@$(MAKE) -s measure SCHED=PRIORITY QUANTUM=1
+	@head -n 1 results_RR_q1.tsv > results_all.tsv
+	@for f in results_*_q*.tsv; do tail -n +2 $$f >> results_all.tsv; done
+	@echo "==> Saved results_all.tsv"
+
+.PHONY: measure measure-all
 
 # CUT HERE
 # prepare dist for students
