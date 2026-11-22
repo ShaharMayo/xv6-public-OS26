@@ -49,6 +49,13 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+    // HW2 (staff): scheduling statistics
+  uint ctime;        // tick when the process was created
+  uint etime;        // tick when it exited
+  uint rtime;        // ticks spent RUNNING
+  uint wtime;        // ticks spent RUNNABLE (waiting for the CPU)
+  int priority;      // smaller number = more important
+  int length;        // declared job length in ticks (used by SJF)
 };
 
 // Process memory is laid out contiguously, low addresses first:

@@ -88,6 +88,12 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->ctime = ticks;
+  p->etime = 0;
+  p->rtime = 0;
+  p->wtime = 0;
+  p->priority = 10;
+  p->length = 0;
 
   release(&ptable.lock);
 
@@ -261,6 +267,7 @@ exit(void)
     }
   }
 
+  curproc->etime = ticks;
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
   sched();
@@ -523,7 +530,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("%d %s %s r=%d w=%d", p->pid, state, p->name, p->rtime, p->wtime);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
@@ -531,4 +538,20 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+// HW2 (staff): called once per timer tick.
+void
+updatestats(void)
+{
+  struct proc *p;
+
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == RUNNING)
+      p->rtime++;
+    else if(p->state == RUNNABLE)
+      p->wtime++;
+  }
+  release(&ptable.lock);
 }
