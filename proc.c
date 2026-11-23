@@ -606,21 +606,17 @@ pick_next(void)
 #endif
 }
 
-// HW2 (staff): the original xv6 behaviour. Used as a placeholder below.
+// HW2 (staff): placeholder so the kernel runs before you write your code.
+// Returns the first RUNNABLE process in the table. This is NOT a fair policy
+// and it is not round-robin.
 struct proc*
 pick_default(void)
 {
-  static int next = 0;
-  int i;
   struct proc *p;
 
-  for(i = 0; i < NPROC; i++){
-    p = &ptable.proc[(next + i) % NPROC];
-    if(p->state == RUNNABLE){
-      next = (next + i + 1) % NPROC;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+    if(p->state == RUNNABLE)
       return p;
-    }
-  }
   return 0;
 }
 
