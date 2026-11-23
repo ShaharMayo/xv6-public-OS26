@@ -679,6 +679,16 @@ should_yield(struct proc *p)
 #endif
 }
 
+// The time quantum, used by RR and SRTF. Called once per timer tick while p is running.
+int
+quantum_expired(struct proc *p)
+{
+  p->slice++;
+  if(p->slice >= QUANTUM)
+    return 1;
+  return 0;
+}
+
 // ============ HW2: your code goes below this line ============
 // In every pick_* function the process table is ptable.proc[0..NPROC-1],
 // and only processes whose state is RUNNABLE may be chosen.
@@ -726,14 +736,4 @@ struct proc*
 pick_rr(void)
 {
   return pick_default();   // HW2: replace this line
-}
-
-// The time quantum, used by RR and SRTF. Called once per timer tick while p is running.
-// p->slice counts the ticks p has used in its current turn (the kernel
-// resets it to 0 each time p is given the CPU).
-// Return 1 if p has used QUANTUM ticks and must give up the CPU, else 0.
-int
-quantum_expired(struct proc *p)
-{
-  return 1;   // HW2: replace this line
 }
