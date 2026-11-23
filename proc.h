@@ -58,6 +58,8 @@ struct proc {
   int length;        // declared job length in ticks (used by SJF)
   int slice;         // ticks used in the current turn on the CPU
   int resp;          // ticks from arrival to first run, -1 = has not run yet
+  int parked;        // 1 while waiting for its arrival tick
+  uint arrival;      // tick at which a parked process becomes RUNNABLE
 };
 
 // Process memory is laid out contiguously, low addresses first:

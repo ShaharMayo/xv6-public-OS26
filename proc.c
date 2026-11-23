@@ -106,6 +106,7 @@ found:
   p->length = 0;
   p->slice = 0;
   p->resp = -1;
+  p->parked = 0;
 
   release(&ptable.lock);
 
@@ -571,13 +572,24 @@ updatestats(void)
       p->rtime++;
     else if(p->state == RUNNABLE)
       p->wtime++;
+    else if(p->state == SLEEPING && p->parked && ticks >= p->arrival){
+      // The job arrives now: start its clock from zero.
+      p->parked = 0;
+      p->chan = 0;
+      p->ctime = ticks;
+      p->rtime = 0;
+      p->wtime = 0;
+      p->resp = -1;
+      p->state = RUNNABLE;
+    }
   }
   release(&ptable.lock);
 }
 
 // HW2 (staff): set priority and declared length of process pid.
+// If delay > 0, hold the process back until `delay` ticks from now.
 int
-setsched(int pid, int priority, int length)
+setsched(int pid, int priority, int length, int delay)
 {
   struct proc *p;
 
@@ -586,6 +598,12 @@ setsched(int pid, int priority, int length)
     if(p->pid == pid && p->state != UNUSED){
       p->priority = priority;
       p->length = length;
+      if(delay > 0 && p->state == RUNNABLE){
+        p->parked = 1;
+        p->arrival = ticks + delay;
+        p->chan = &p->arrival;
+        p->state = SLEEPING;
+      }
       release(&ptable.lock);
       return 0;
     }

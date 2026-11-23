@@ -122,7 +122,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 void            updatestats(void);
-int             setsched(int, int, int);
+int             setsched(int, int, int, int);
 int             waitstat(struct pstat*);
 int             should_yield(struct proc*);
 

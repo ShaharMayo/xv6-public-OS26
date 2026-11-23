@@ -24,7 +24,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int setsched(int, int, int);
+int setsched(int, int, int, int);
 int waitstat(struct pstat*);
 int runticks(void);
 

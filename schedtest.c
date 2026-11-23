@@ -17,11 +17,12 @@
 struct job {
   int priority;
   int length;
+  int arrival;
   int pid;
 };
 
 struct job jobs[MAXJOBS] = {
-  {2, 200}, {5, 20}, {1, 50}, {4, 100}, {3, 10},
+  {4, 20, 20}, {3, 50, 0}, {5, 10, 40}, {1, 200, 10}, {2, 100, 30},
 };
 int njobs = 5;
 
@@ -33,14 +34,15 @@ main(int argc, char *argv[])
   struct pstat res[MAXJOBS];
 
   if(argc > 1){
-    if((argc - 1) % 2 != 0 || (argc - 1) / 2 > MAXJOBS){
-      printf(2, "usage: schedtest [priority length]...\n");
+    if((argc - 1) % 3 != 0 || (argc - 1) / 3 > MAXJOBS){
+      printf(2, "usage: schedtest [priority length arrival]...\n");
       exit();
     }
-    njobs = (argc - 1) / 2;
+    njobs = (argc - 1) / 3;
     for(i = 0; i < njobs; i++){
-      jobs[i].priority = atoi(argv[1 + 2*i]);
-      jobs[i].length = atoi(argv[2 + 2*i]);
+      jobs[i].priority = atoi(argv[1 + 3*i]);
+      jobs[i].length = atoi(argv[2 + 3*i]);
+      jobs[i].arrival = atoi(argv[3 + 3*i]);
     }
   }
 
@@ -57,7 +59,7 @@ main(int argc, char *argv[])
       exit();
     }
     jobs[i].pid = pid;
-    setsched(pid, jobs[i].priority, jobs[i].length);
+    setsched(pid, jobs[i].priority, jobs[i].length, jobs[i].arrival);
   }
 
   // Collect statistics as the children finish.
@@ -69,10 +71,11 @@ main(int argc, char *argv[])
         memmove(&res[j], &st, sizeof(st));
   }
 
-  printf(1, "SCHEDTEST\tpolicy\tquantum\tjob\tpid\tpriority\tlength\tturnaround\twaiting\trunning\tresponse\n");
+  printf(1, "SCHEDTEST\tpolicy\tquantum\tjob\tpid\tpriority\tlength\tarrival\tturnaround\twaiting\trunning\tresponse\n");
   for(i = 0; i < njobs; i++)
-    printf(1, "SCHEDTEST\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+    printf(1, "SCHEDTEST\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
            SCHED_NAME, QUANTUM, i, res[i].pid, res[i].priority, res[i].length,
-           res[i].etime - res[i].ctime, res[i].wtime, res[i].rtime, res[i].resp);
+           jobs[i].arrival, res[i].etime - res[i].ctime, res[i].wtime,
+           res[i].rtime, res[i].resp);
   exit();
 }

@@ -94,11 +94,12 @@ sys_uptime(void)
 int
 sys_setsched(void)
 {
-  int pid, priority, length;
+  int pid, priority, length, delay;
 
-  if(argint(0, &pid) < 0 || argint(1, &priority) < 0 || argint(2, &length) < 0)
+  if(argint(0, &pid) < 0 || argint(1, &priority) < 0 ||
+     argint(2, &length) < 0 || argint(3, &delay) < 0)
     return -1;
-  return setsched(pid, priority, length);
+  return setsched(pid, priority, length, delay);
 }
 
 int
