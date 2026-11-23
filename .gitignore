@@ -20,3 +20,4 @@ mkfs
 .DS_Store
 .schedcfg
 results_*.tsv
+exp*.tsv

@@ -281,23 +281,18 @@ FORCE:
 $(OBJS) schedtest.o: .schedcfg
 
 # ---- Course: HW2 measurements ----
-QUANTA ?= 5 10
+# make measure SCHED=SJF [QUANTUM=n] [WORKLOAD=exp1|exp2|exp3]
+# make experiment EXP=1      (or 2, or 3)
+WORKLOAD ?= exp1
+export WORKLOAD
 
 measure:
 	@sh tools/measure.sh
 
-measure-all:
-	@rm -f results_*.tsv
-	@$(MAKE) -s measure SCHED=RR QUANTUM=1
-	@for q in $(QUANTA); do $(MAKE) -s measure SCHED=RR QUANTUM=$$q || exit 1; done
-	@$(MAKE) -s measure SCHED=FCFS QUANTUM=1
-	@$(MAKE) -s measure SCHED=SJF QUANTUM=1
-	@$(MAKE) -s measure SCHED=PRIORITY QUANTUM=1
-	@head -n 1 results_RR_q1.tsv > results_all.tsv
-	@for f in results_*_q*.tsv; do tail -n +2 $$f >> results_all.tsv; done
-	@echo "==> Saved results_all.tsv"
+experiment:
+	@sh tools/experiment.sh "$(EXP)"
 
-.PHONY: measure measure-all
+.PHONY: measure experiment
 
 # CUT HERE
 # prepare dist for students
