@@ -624,6 +624,11 @@ pick_default(void)
 int
 should_yield(struct proc *p)
 {
+  // A schedtest job that has used all of its declared ticks is finished:
+  // let it return to user space and exit instead of waiting another round.
+  if(p->length > 0 && p->rtime >= p->length)
+    return 0;
+
 #if defined(SCHED_RR)
   return quantum_expired(p);
 #else
