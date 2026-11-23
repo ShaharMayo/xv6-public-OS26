@@ -21,6 +21,7 @@ struct proc* pick_fcfs(void);
 struct proc* pick_sjf(void);
 struct proc* pick_priority(void);
 int quantum_expired(struct proc*);
+struct proc* pick_srtf(void);
 
 static struct proc *initproc;
 
@@ -29,6 +30,18 @@ extern void forkret(void);
 extern void trapret(void);
 
 static void wakeup1(void *chan);
+
+// HW2 (staff): every time a process becomes RUNNABLE it gets the next number.
+static uint nextseq = 1;
+
+// Mark p RUNNABLE and put it at the back of the ready queue.
+// Must be called with ptable.lock held.
+static void
+makerunnable(struct proc *p)
+{
+  p->readyseq = nextseq++;
+  p->state = RUNNABLE;
+}
 
 void
 pinit(void)
@@ -167,7 +180,7 @@ userinit(void)
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
 
-  p->state = RUNNABLE;
+  makerunnable(p);
 
   release(&ptable.lock);
 }
@@ -234,7 +247,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->ctime = ticks;
-  np->state = RUNNABLE;
+  makerunnable(np);
 
   release(&ptable.lock);
 
@@ -413,7 +426,7 @@ void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
-  myproc()->state = RUNNABLE;
+  makerunnable(myproc());
   sched();
   release(&ptable.lock);
 }
@@ -488,7 +501,7 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan)
-      p->state = RUNNABLE;
+      makerunnable(p);
 }
 
 // Wake up all processes sleeping on chan.
@@ -514,7 +527,7 @@ kill(int pid)
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
-        p->state = RUNNABLE;
+        makerunnable(p);
       release(&ptable.lock);
       return 0;
     }
@@ -580,7 +593,7 @@ updatestats(void)
       p->rtime = 0;
       p->wtime = 0;
       p->resp = -1;
-      p->state = RUNNABLE;
+      makerunnable(p);
     }
   }
   release(&ptable.lock);
@@ -623,22 +636,30 @@ pick_next(void)
   return pick_sjf();
 #elif defined(SCHED_PRIORITY)
   return pick_priority();
+#elif defined(SCHED_SRTF)
+  return pick_srtf();
 #else
   return pick_rr();
 #endif
 }
 
-// HW2 (staff): placeholder so the kernel runs before you write your code.
-// Returns the first RUNNABLE process in the table. This is NOT a fair policy
-// and it is not round-robin.
+// HW2 (staff): placeholder so the kernel works before you write your code.
+// It gives every process a turn by scanning the table from where it last
+// stopped. It is NOT any of the policies you are asked to implement.
 struct proc*
 pick_default(void)
 {
+  static int next = 0;
+  int i;
   struct proc *p;
 
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == RUNNABLE)
+  for(i = 0; i < NPROC; i++){
+    p = &ptable.proc[(next + i) % NPROC];
+    if(p->state == RUNNABLE){
+      next = (next + i + 1) % NPROC;
       return p;
+    }
+  }
   return 0;
 }
 
@@ -651,7 +672,7 @@ should_yield(struct proc *p)
   if(p->length > 0 && p->rtime >= p->length)
     return 0;
 
-#if defined(SCHED_RR)
+#if defined(SCHED_RR) || defined(SCHED_SRTF)
   return quantum_expired(p);
 #else
   return 0;   // FCFS, SJF and PRIORITY never preempt
@@ -684,16 +705,30 @@ pick_priority(void)
   return pick_default();   // HW2: replace this line
 }
 
-// Round-robin, part 1: the next RUNNABLE process after the one chosen last
-// time, wrapping around to the start of the table.
-// Hint: a static variable keeps its value between calls.
+// SRTF (preemptive SJF): the RUNNABLE process with the least work left,
+// which is the smallest value of p->length - p->rtime.
+// The kernel interrupts the running process every QUANTUM ticks and calls
+// this function again, so a shorter job that has arrived gets the CPU.
+struct proc*
+pick_srtf(void)
+{
+  return pick_default();   // HW2: replace this line
+}
+
+// Round-robin: the process at the front of the ready queue.
+// Round-robin keeps the RUNNABLE processes in a queue: the one at the front
+// runs next, and a process that becomes RUNNABLE (new, woken up, or just
+// preempted) joins the back. The kernel records this order for you: every
+// time a process becomes RUNNABLE it gets a new, larger p->readyseq.
+// So the front of the queue is the RUNNABLE process with the smallest
+// p->readyseq.
 struct proc*
 pick_rr(void)
 {
   return pick_default();   // HW2: replace this line
 }
 
-// Round-robin, part 2: called once per timer tick while p is running.
+// The time quantum, used by RR and SRTF. Called once per timer tick while p is running.
 // p->slice counts the ticks p has used in its current turn (the kernel
 // resets it to 0 each time p is given the CPU).
 // Return 1 if p has used QUANTUM ticks and must give up the CPU, else 0.

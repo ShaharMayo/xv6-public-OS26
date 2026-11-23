@@ -87,8 +87,8 @@ CFLAGS += $(shell $(CC) -Winfinite-recursion -E -x c /dev/null >/dev/null 2>&1 &
 #        make qemu-nox SCHED=RR QUANTUM=5
 SCHED   ?= RR
 QUANTUM ?= 1
-ifeq ($(filter $(SCHED),RR FCFS SJF PRIORITY),)
-$(error SCHED must be one of: RR FCFS SJF PRIORITY)
+ifeq ($(filter $(SCHED),RR FCFS SJF PRIORITY SRTF),)
+$(error SCHED must be one of: RR FCFS SJF PRIORITY SRTF)
 endif
 CFLAGS += -DSCHED_$(SCHED) -DSCHED_NAME=\"$(SCHED)\" -DQUANTUM=$(QUANTUM)
 export SCHED QUANTUM

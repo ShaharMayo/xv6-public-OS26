@@ -52,7 +52,7 @@ struct proc {
     // HW2 (staff): scheduling statistics
   uint ctime;        // tick when the process was created
   uint etime;        // tick when it exited
-  uint rtime;        // ticks spent RUNNING
+  int rtime;         // ticks spent RUNNING
   uint wtime;        // ticks spent RUNNABLE (waiting for the CPU)
   int priority;      // smaller number = more important
   int length;        // declared job length in ticks (used by SJF)
@@ -60,6 +60,7 @@ struct proc {
   int resp;          // ticks from arrival to first run, -1 = has not run yet
   int parked;        // 1 while waiting for its arrival tick
   uint arrival;      // tick at which a parked process becomes RUNNABLE
+  uint readyseq;     // place in the ready queue: smaller = has waited longer
 };
 
 // Process memory is laid out contiguously, low addresses first:
