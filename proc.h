@@ -57,6 +57,7 @@ struct proc {
   int priority;      // smaller number = more important
   int length;        // declared job length in ticks (used by SJF)
   int slice;         // ticks used in the current turn on the CPU
+  int resp;          // ticks from arrival to first run, -1 = has not run yet
 };
 
 // Process memory is laid out contiguously, low addresses first:

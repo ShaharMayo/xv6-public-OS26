@@ -105,6 +105,7 @@ found:
   p->priority = 10;
   p->length = 0;
   p->slice = 0;
+  p->resp = -1;
 
   release(&ptable.lock);
 
@@ -314,6 +315,7 @@ waitstat(struct pstat *st)
           st->etime = p->etime;
           st->rtime = p->rtime;
           st->wtime = p->wtime;
+          st->resp = p->resp;
         }
         kfree(p->kstack);
         p->kstack = 0;
@@ -366,6 +368,8 @@ scheduler(void)
     p = pick_next();              // which process runs now?
     if(p != 0){
       p->slice = 0;               // a fresh turn on the CPU
+      if(p->resp < 0)
+        p->resp = ticks - p->ctime;   // first time on the CPU
       c->proc = p;
       switchuvm(p);
       p->state = RUNNING;

@@ -7,4 +7,5 @@ struct pstat {
   uint etime;   // exit tick
   uint rtime;   // ticks running
   uint wtime;   // ticks waiting for the CPU
+  int resp;     // ticks from arrival to first run
 };

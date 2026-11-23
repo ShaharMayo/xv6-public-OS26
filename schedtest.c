@@ -69,10 +69,10 @@ main(int argc, char *argv[])
         memmove(&res[j], &st, sizeof(st));
   }
 
-  printf(1, "SCHEDTEST\tpolicy\tquantum\tjob\tpid\tpriority\tlength\tturnaround\twaiting\trunning\n");
+  printf(1, "SCHEDTEST\tpolicy\tquantum\tjob\tpid\tpriority\tlength\tturnaround\twaiting\trunning\tresponse\n");
   for(i = 0; i < njobs; i++)
-    printf(1, "SCHEDTEST\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+    printf(1, "SCHEDTEST\t%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
            SCHED_NAME, QUANTUM, i, res[i].pid, res[i].priority, res[i].length,
-           res[i].etime - res[i].ctime, res[i].wtime, res[i].rtime);
+           res[i].etime - res[i].ctime, res[i].wtime, res[i].rtime, res[i].resp);
   exit();
 }
