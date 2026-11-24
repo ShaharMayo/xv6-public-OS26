@@ -380,6 +380,8 @@ scheduler(void)
     sti();
     acquire(&ptable.lock);
     p = pick_next();              // which process runs now?
+    if(p != 0 && p->state != RUNNABLE)
+      panic("pick function returned a process that is not RUNNABLE");
     if(p != 0){
       p->slice = 0;               // a fresh turn on the CPU
       if(p->resp < 0)

@@ -51,11 +51,14 @@ def run_schedtest(workdir, sched, quantum, workload):
     for name in ("MAKEFLAGS", "MFLAGS", "MAKEOVERRIDES", "MAKELEVEL"):
         env.pop(name, None)
     cmd = [sys.executable, os.path.join(HERE, "xv6run.py"), "--cwd", workdir,
-           "--quiet", "--timeout", "180", "schedtest " + " ".join(workload.split())]
+           "--quiet", "--timeout", "120", "schedtest " + " ".join(workload.split())]
     p = subprocess.run(cmd, env=env, stdout=subprocess.PIPE,
                        stderr=subprocess.STDOUT, universal_newlines=True)
     rows = [l.split("\t")[1:] for l in p.stdout.splitlines()
             if l.startswith("SCHEDTEST\t")]
+    if "panic" in p.stdout or "unexpected trap" in p.stdout:
+        return None, ("the kernel crashed (panic). A common cause is using a "
+                      "pointer before it was set, e.g. best->... while best is still 0")
     if p.returncode == 2:
         return None, "xv6 hung, or schedtest never finished"
     if p.returncode != 0:
