@@ -266,13 +266,16 @@ SUBMIT_ALLOWED     := proc.c
 SUBMIT_EXPERIMENTS := 1 2 3
 export ASSIGNMENT BASE_TAG VERIFY_SCRIPT SUBMIT_ALLOWED SUBMIT_EXPERIMENTS
 
+check:
+	@python3 tools/$(VERIFY_SCRIPT) .
+
 submit:
 	@sh tools/submit.sh "$(ID)"
 
 verify:
 	@sh tools/verify.sh "$(PATCH)"
 
-.PHONY: submit verify
+.PHONY: check submit verify
 
 # ---- Course: HW2 build options ----
 # Rebuild when SCHED or QUANTUM changes.
