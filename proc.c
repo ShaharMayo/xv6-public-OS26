@@ -679,7 +679,9 @@ should_yield(struct proc *p)
 #endif
 }
 
-// The time quantum, used by RR and SRTF. Called once per timer tick while p is running.
+// HW2 (staff): the time quantum, used by RR and SRTF.
+// Called once per timer tick while p is running. Returns 1 when p has
+// used QUANTUM ticks in its current turn and must give up the CPU.
 int
 quantum_expired(struct proc *p)
 {

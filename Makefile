@@ -259,11 +259,12 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 	$(QEMU) -nographic $(QEMUOPTS) -S $(QEMUGDB)
 
 # ---- Course: assignment submission ----
-ASSIGNMENT := 1
-BASE_TAG   := base
-VERIFY_CMD    := hello
-VERIFY_EXPECT := Hello from xv6!
-export ASSIGNMENT BASE_TAG VERIFY_CMD VERIFY_EXPECT
+ASSIGNMENT    := 2
+BASE_TAG      := hw2-base
+VERIFY_SCRIPT := hw2check.py
+SUBMIT_ALLOWED     := proc.c
+SUBMIT_EXPERIMENTS := 1 2 3
+export ASSIGNMENT BASE_TAG VERIFY_SCRIPT SUBMIT_ALLOWED SUBMIT_EXPERIMENTS
 
 submit:
 	@sh tools/submit.sh "$(ID)"
@@ -273,6 +274,7 @@ verify:
 
 .PHONY: submit verify
 
+# ---- Course: HW2 build options ----
 # Rebuild when SCHED or QUANTUM changes.
 SCHEDCFG := SCHED=$(SCHED) QUANTUM=$(QUANTUM)
 .schedcfg: FORCE

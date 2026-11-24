@@ -39,6 +39,15 @@ if ! (make -C "$WORK" -s >"$LOG" 2>&1 && make -C "$WORK" -s fs.img >>"$LOG" 2>&1
 fi
 echo "    kernel and fs.img built"
 
+if [ -n "$VERIFY_SCRIPT" ]; then
+    step "Testing each function (about three minutes)"
+    if python3 "$ROOT/tools/$VERIFY_SCRIPT" "$WORK"; then
+        printf '\nRESULT: PASS - %s is ready to submit.\n' "$(basename "$PATCH")"
+        exit 0
+    fi
+    die "RESULT: FAIL - fix the functions marked FAIL above."
+fi
+
 step "Booting xv6 and running '$VERIFY_CMD' (expecting \"$VERIFY_EXPECT\")"
 python3 "$ROOT/tools/xv6run.py" --quiet --cwd "$WORK" --timeout 120 \
     --expect "$VERIFY_EXPECT" "$VERIFY_CMD"
